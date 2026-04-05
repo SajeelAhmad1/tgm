@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -19,6 +20,8 @@ export type LoginFormCardProps = {
   onToggleRemember: () => void;
   onSignIn: () => void;
   onForgotPassword: () => void;
+  submitting?: boolean;
+  errorText?: string | null;
 };
 
 export function LoginFormCard({
@@ -30,7 +33,11 @@ export function LoginFormCard({
   onToggleRemember,
   onSignIn,
   onForgotPassword,
+  submitting = false,
+  errorText,
 }: LoginFormCardProps) {
+  const locked = submitting;
+
   return (
     <View style={styles.card}>
       <Text style={styles.fieldLabel}>Email Address</Text>
@@ -41,6 +48,7 @@ export function LoginFormCard({
         placeholderTextColor={LOGIN_COLORS.placeholder}
         autoCapitalize="none"
         keyboardType="email-address"
+        editable={!locked}
         style={styles.input}
       />
 
@@ -51,6 +59,7 @@ export function LoginFormCard({
         placeholder="••••••••"
         placeholderTextColor={LOGIN_COLORS.placeholder}
         secureTextEntry
+        editable={!locked}
         style={styles.input}
       />
 
@@ -58,6 +67,7 @@ export function LoginFormCard({
         <Pressable
           style={styles.rememberRow}
           onPress={onToggleRemember}
+          disabled={locked}
           hitSlop={8}>
           <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
             {rememberMe ? <Text style={styles.checkmark}>✓</Text> : null}
@@ -65,21 +75,28 @@ export function LoginFormCard({
           <Text style={styles.rememberText}>Remember me</Text>
         </Pressable>
 
-        <Pressable onPress={onForgotPassword} hitSlop={8}>
+        <Pressable onPress={onForgotPassword} disabled={locked} hitSlop={8}>
           <Text style={styles.forgotText}>Forgot Password?</Text>
         </Pressable>
       </View>
+
+      {errorText ? <Text style={styles.errorText}>{errorText}</Text> : null}
 
       <LinearGradient
         colors={BTN_GRADIENT_STOPS}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 0}}
-        style={styles.signInBtn}>
+        style={[styles.signInBtn, locked && styles.signInBtnDisabled]}>
         <Pressable
           onPress={onSignIn}
+          disabled={locked}
           style={styles.signInBtnPressable}
           android_ripple={{color: 'rgba(255,255,255,0.15)'}}>
-          <Text style={styles.signInBtnText}>Sign In</Text>
+          {submitting ? (
+            <ActivityIndicator color={LOGIN_COLORS.white} />
+          ) : (
+            <Text style={styles.signInBtnText}>Sign In</Text>
+          )}
         </Pressable>
       </LinearGradient>
     </View>
@@ -167,12 +184,24 @@ const styles = StyleSheet.create({
     lineHeight: moderateScale(20),
     color: LOGIN_COLORS.forgotPassword,
   },
+  errorText: {
+    fontFamily: 'Inter',
+    fontWeight: '500',
+    fontSize: moderateScale(13),
+    lineHeight: moderateScale(18),
+    color: '#DC2626',
+    marginBottom: verticalScale(12),
+    textAlign: 'center',
+  },
   signInBtn: {
     width: scale(274),
     height: verticalScale(52),
     borderRadius: moderateScale(10),
     alignSelf: 'center',
     overflow: 'hidden',
+  },
+  signInBtnDisabled: {
+    opacity: 0.85,
   },
   signInBtnPressable: {
     flex: 1,

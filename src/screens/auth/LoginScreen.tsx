@@ -2,6 +2,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import React, {useState} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {moderateScale, verticalScale} from 'react-native-size-matters';
+import {LoginError, loginRequest} from '../../api/auth';
 import {AuthGradientLayout} from '../../components/auth/AuthGradientLayout';
 import {AuthLogoMark} from '../../components/auth/AuthLogoMark';
 import {LoginFormCard} from '../../components/auth/LoginFormCard';
@@ -12,18 +13,37 @@ import {useAuthStore} from '../../store/authStore';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export function LoginScreen({navigation}: Props) {
-  const setSession = useAuthStore(s => s.setSession);
+  const setAuthFromLogin = useAuthStore(s => s.setAuthFromLogin);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorText, setErrorText] = useState<string | null>(null);
 
-  const onLogin = () => {
-    setSession({
-      accessToken: 'dev-access-token',
-      refreshToken: 'dev-refresh-token',
-      userId: '00000000-0000-4000-8000-000000000001',
-      email: email.trim() || 'inspector@example.com',
-    });
+  const onLogin = async () => {
+    setErrorText(null);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      setErrorText('Please enter email and password.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const data = await loginRequest({
+        email: trimmedEmail,
+        password,
+      });
+      setAuthFromLogin(data);
+    } catch (e) {
+      const message =
+        e instanceof LoginError
+          ? e.message
+          : 'Something went wrong. Please try again.';
+      setErrorText(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -35,11 +55,19 @@ export function LoginScreen({navigation}: Props) {
         email={email}
         password={password}
         rememberMe={rememberMe}
-        onChangeEmail={setEmail}
-        onChangePassword={setPassword}
+        onChangeEmail={v => {
+          setEmail(v);
+          setErrorText(null);
+        }}
+        onChangePassword={v => {
+          setPassword(v);
+          setErrorText(null);
+        }}
         onToggleRemember={() => setRememberMe(v => !v)}
         onSignIn={onLogin}
         onForgotPassword={() => navigation.navigate('ForgotPassword')}
+        submitting={submitting}
+        errorText={errorText}
       />
     </AuthGradientLayout>
   );

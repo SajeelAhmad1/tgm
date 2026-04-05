@@ -78,11 +78,10 @@ function FieldSection({
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
-type Props = {
-    inspectionId: string;
-  };
+type Props = NativeStackScreenProps<MainStackParamList, 'CompleteInspection'>;
 
-export function CompleteInspectionScreen({inspectionId}: Props) {
+export function CompleteInspectionScreen({route}: Props) {
+  const {inspectionId} = route.params;
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');

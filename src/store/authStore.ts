@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {create} from 'zustand';
 import {createJSONStorage, persist} from 'zustand/middleware';
+import type {LoginSuccessData} from '../api/auth/types';
 
 const safeAsyncStorage = {
   getItem: (name: string) =>
@@ -18,17 +19,18 @@ const safeAsyncStorage = {
     }),
 };
 
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+};
+
 type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
-  userId: string | null;
-  email: string | null;
-  setSession: (payload: {
-    accessToken: string;
-    refreshToken: string;
-    userId: string;
-    email: string;
-  }) => void;
+  user: AuthUser | null;
+  setAuthFromLogin: (data: LoginSuccessData) => void;
   clearSession: () => void;
 };
 
@@ -37,34 +39,36 @@ export const useAuthStore = create<AuthState>()(
     set => ({
       accessToken: null,
       refreshToken: null,
-      userId: null,
-      email: null,
-      setSession: payload =>
+      user: null,
+      setAuthFromLogin: data =>
         set({
-          accessToken: payload.accessToken,
-          refreshToken: payload.refreshToken,
-          userId: payload.userId,
-          email: payload.email,
+          accessToken: data.token,
+          refreshToken: data.refreshToken,
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.name,
+            role: data.user.role,
+          },
         }),
       clearSession: () =>
         set({
           accessToken: null,
           refreshToken: null,
-          userId: null,
-          email: null,
+          user: null,
         }),
     }),
     {
-      name: 'glassmarket-auth',
+      name: 'glassmarket-auth-v2',
       storage: createJSONStorage(() => safeAsyncStorage),
       partialize: s => ({
         accessToken: s.accessToken,
         refreshToken: s.refreshToken,
-        userId: s.userId,
-        email: s.email,
+        user: s.user,
       }),
     },
   ),
 );
 
 export const selectIsLoggedIn = (s: AuthState) => Boolean(s.accessToken);
+export const selectAuthUser = (s: AuthState) => s.user;

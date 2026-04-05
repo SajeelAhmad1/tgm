@@ -1,19 +1,36 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useState} from 'react';
+import React, {useEffect} from 'react';
 import {ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
+import {fetchInspectionsList} from '../../api/inspections/fetchInspectionsList';
 import {InspectionListCard} from '../../components/inspections/InspectionListCard';
 import {InspectionListHeader} from '../../components/inspections/InspectionListHeader';
 import {InspectionSyncBanner} from '../../components/inspections/InspectionSyncBanner';
 import {INSPECTION_LIST_COLORS} from '../../components/inspections/inspectionListTokens';
 import type {MainStackParamList} from '../../navigation/types';
-import {MOCK_INSPECTIONS} from './mockInspections';
+import {useInspectionsListStore} from '../../store/inspectionsListStore';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'InspectionList'>;
 
 export function InspectionListScreen({navigation}: Props) {
-  const [currentDate] = useState({day: 'Monday', date: '16 March 2026'});
-  const [syncTime] = useState('9:38 AM');
+  const [currentDate] = React.useState({day: 'Monday', date: '16 March 2026'});
+  const [syncTime] = React.useState('9:38 AM');
+
+  const items = useInspectionsListStore(s => s.items);
+  const setItems = useInspectionsListStore(s => s.setItems);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const next = await fetchInspectionsList();
+      if (!cancelled) {
+        setItems(next);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [setItems]);
 
   return (
     <View style={styles.screen}>
@@ -30,11 +47,9 @@ export function InspectionListScreen({navigation}: Props) {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionLabel}>
-          {MOCK_INSPECTIONS.length} Inspections
-        </Text>
+        <Text style={styles.sectionLabel}>{items.length} Inspections</Text>
 
-        {MOCK_INSPECTIONS.map(item => (
+        {items.map(item => (
           <InspectionListCard
             key={item.id}
             item={item}

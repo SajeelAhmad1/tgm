@@ -17,11 +17,13 @@ import {
 } from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {MainStackParamList} from '../../../navigation/types';
-import {
-  getInspectionOverviewDetail,
-  type InspectionOverviewDetail,
-} from '../mockInspections';
 import type {InspectionListItem} from '../../../components/inspections/InspectionListCard';
+import {
+  buildInspectionOverviewBundle,
+  type InspectionOverviewDetail,
+} from '../../../inspections/inspectionOverview';
+import {buildPlaceholderListItem} from '../../../inspections/fallbackInspectionList';
+import {useInspectionsListStore} from '../../../store/inspectionsListStore';
 import {
   InspectionTabBar,
   type InspectionDetailTabId,
@@ -213,17 +215,10 @@ function InspectionDetailTabbedLayout({inspectionId}: TabbedProps) {
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<InspectionDetailTabId>('Overview');
 
-  const bundle = getInspectionOverviewDetail(inspectionId);
-  if (!bundle) {
-    return (
-      <View style={styles.missing}>
-        <Text style={styles.missingText}>Inspection not found.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.missingLink}>Go back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  const cached = useInspectionsListStore(s => s.items.find(x => x.id === inspectionId));
+  const listItem: InspectionListItem =
+    cached ?? buildPlaceholderListItem(inspectionId);
+  const bundle = buildInspectionOverviewBundle(listItem);
 
   const renderContent = () => {
     switch (activeTab) {
