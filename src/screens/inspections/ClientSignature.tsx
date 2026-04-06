@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import SignatureCanvas, { SignatureViewRef } from 'react-native-signature-canvas';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { ConnectivityBanner } from '../../components/ConnectivityBanner';
 import { InspectionFlowHeader } from '../../components/inspections/InspectionFlowHeader';
+import { ScreenLoadingOverlay } from '../../components/ScreenLoadingOverlay';
 import { MainStackParamList } from '../../navigation/types';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -83,6 +85,8 @@ export function ClientSignatureScreen() {
     const sigRef = useRef<SignatureViewRef>(null);
     const [isEmpty, setIsEmpty] = useState(true);
     const [isDrawing, setIsDrawing] = useState(false);
+    const [loading] = useState(false);
+    const [loadError] = useState<string | null>(null);
 
     // Lock scroll when finger enters canvas, unlock when lifted
     const handleBegin = () => {
@@ -120,6 +124,10 @@ export function ClientSignatureScreen() {
                 subtitle="Bay View Apartments · Client Sign-Off"
                 onBack={() => navigation?.goBack()}
             />
+            <ConnectivityBanner />
+            {loadError ? (
+                <Text style={styles.loadErrorText}>{loadError}</Text>
+            ) : null}
 
             <ScrollView
                 style={styles.scrollView}
@@ -214,6 +222,7 @@ export function ClientSignatureScreen() {
                     </Pressable>
                 </View>
             </ScrollView>
+            <ScreenLoadingOverlay visible={loading} />
         </View>
     );
 }
@@ -224,6 +233,13 @@ const styles = StyleSheet.create({
     screen: {
         flex: 1,
         backgroundColor: COLORS.screenBg,
+    },
+    loadErrorText: {
+        paddingHorizontal: scale(16),
+        paddingVertical: verticalScale(8),
+        color: '#DC2626',
+        fontSize: moderateScale(14),
+        lineHeight: moderateScale(20),
     },
 
     // ── Scroll

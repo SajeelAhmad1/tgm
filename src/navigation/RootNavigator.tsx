@@ -47,8 +47,6 @@ export function RootNavigator() {
 
     const unsub = persistApi.onFinishHydration(() => setReady(true));
 
-    // Zustand persist does not call onFinishHydration or set hasHydrated when
-    // storage.getItem rejects — the app would spin forever without this.
     const failSafe = setTimeout(() => {
       if (!persistApi.hasHydrated()) {
         setReady(true);

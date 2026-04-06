@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {ConnectivityBanner} from '../../../components/ConnectivityBanner';
 import {useNavigation} from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import type {MainStackParamList} from '../../../navigation/types';
@@ -23,6 +24,7 @@ export function SummaryTab({inspectionId}: Props) {
 
   return (
     <View style={styles.container}>
+      <ConnectivityBanner />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>

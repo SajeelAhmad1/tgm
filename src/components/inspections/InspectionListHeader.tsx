@@ -1,5 +1,6 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {INSPECTION_LIST_COLORS} from './inspectionListTokens';
 
@@ -23,8 +24,10 @@ export function InspectionListHeader({
   onPressPrevDay,
   onPressNextDay,
 }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, {paddingTop: insets.top}]}>
       <View style={styles.headerTopRow}>
         <Text style={styles.headerName}>{userName}</Text>
         <Pressable style={styles.iconBtn} hitSlop={8} onPress={onPressMenu}>
@@ -53,7 +56,6 @@ export function InspectionListHeader({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: INSPECTION_LIST_COLORS.headerBg,
-    paddingTop: verticalScale(48),
     paddingBottom: verticalScale(20),
     paddingHorizontal: scale(16),
   },

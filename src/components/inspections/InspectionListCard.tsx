@@ -53,7 +53,7 @@ export function InspectionListCard({item, onPress}: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    width: scale(342),
+    width: scale(320),
     alignSelf: 'center',
     backgroundColor: INSPECTION_LIST_COLORS.cardBg,
     borderRadius: moderateScale(16),

@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { ConnectivityBanner } from '../../../components/ConnectivityBanner';
 import { ItemFilterChips } from '../../../components/inspections/items/ItemFilterChips';
 import { ItemListRow } from '../../../components/inspections/items/ItemListRow';
 import type { FilterType } from '../../../components/inspections/items/itemsTabTokens';
@@ -31,6 +32,7 @@ export function ItemsTab({ inspectionId: _inspectionId, onItemPress }: Props) {
 
   return (
     <View style={styles.container}>
+      <ConnectivityBanner />
       <View style={styles.topRow}>
         <Text style={styles.countLabel}>{MOCK_INSPECTION_ITEMS.length} Items</Text>
         <Pressable onPress={() => setShowNewItem(true)} style={styles.addButton}>

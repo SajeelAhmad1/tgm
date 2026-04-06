@@ -1,6 +1,5 @@
 import type {InspectionListItem} from '../../components/inspections/InspectionListCard';
 import {getApiBaseUrl} from '../../config/env';
-import {FALLBACK_INSPECTION_LIST} from '../../inspections/fallbackInspectionList';
 import {useAuthStore} from '../../store/authStore';
 import {mapApiInspectionToListItem} from './mapApiToListItem';
 import type {ApiInspectionDto} from './types';
@@ -30,14 +29,17 @@ function isValidSuccessResponse(
   return Array.isArray(data.inspections);
 }
 
+export type NetworkInspectionsResult =
+  | {ok: true; items: InspectionListItem[]}
+  | {ok: false; error: string};
+
 /**
- * GET /api/inspections (Bearer). On failure or empty payload, returns the same
- * dummy list as before so the screen layout stays identical.
+ * GET /api/inspections — no local fallback; callers handle errors and cache.
  */
-export async function fetchInspectionsList(): Promise<InspectionListItem[]> {
+export async function requestInspectionsFromNetwork(): Promise<NetworkInspectionsResult> {
   const token = useAuthStore.getState().accessToken;
   if (!token) {
-    return [...FALLBACK_INSPECTION_LIST];
+    return {ok: false, error: 'Not signed in.'};
   }
 
   try {
@@ -49,18 +51,25 @@ export async function fetchInspectionsList(): Promise<InspectionListItem[]> {
       },
     });
 
-    const parsed = parseJson(await res.text());
-    if (!res.ok || !isValidSuccessResponse(parsed)) {
-      return [...FALLBACK_INSPECTION_LIST];
+    const bodyText = await res.text();
+    const parsed = parseJson(bodyText);
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: `Could not load inspections (${res.status}).`,
+      };
+    }
+
+    if (!isValidSuccessResponse(parsed)) {
+      return {ok: false, error: 'Invalid response from server.'};
     }
 
     const rows = parsed.data.inspections;
-    if (rows.length === 0) {
-      return [...FALLBACK_INSPECTION_LIST];
-    }
-
-    return rows.map(mapApiInspectionToListItem);
-  } catch {
-    return [...FALLBACK_INSPECTION_LIST];
+    const items = rows.map(mapApiInspectionToListItem);
+    return {ok: true, items};
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Network error';
+    return {ok: false, error: msg};
   }
 }

@@ -1,6 +1,6 @@
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -9,7 +9,9 @@ import {
   View,
 } from 'react-native';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { ConnectivityBanner } from '../../components/ConnectivityBanner';
 import { InspectionFlowHeader } from '../../components/inspections/InspectionFlowHeader';
+import { ScreenLoadingOverlay } from '../../components/ScreenLoadingOverlay';
 import { MainStackParamList } from '../../navigation/types';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -80,6 +82,8 @@ export function InspectionCompleteScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
     const route = useRoute<RouteProp<MainStackParamList, 'InspectionComplete'>>();
     const { inspectionId } = route.params;
+  const [loading] = useState(false);
+  const [loadError] = useState<string | null>(null);
   const summaryRows: SummaryRow[] = [
     { label: 'Total Questions', value: '30' },
     { label: 'No Issues', value: '3 items', valueColor: COLORS.rowValueGreen },
@@ -94,6 +98,10 @@ export function InspectionCompleteScreen() {
         title="Inspection Complete"
         onBack={() => navigation?.goBack()}
       />
+      <ConnectivityBanner />
+      {loadError ? (
+        <Text style={styles.loadErrorText}>{loadError}</Text>
+      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -142,6 +150,7 @@ export function InspectionCompleteScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      <ScreenLoadingOverlay visible={loading} />
     </View>
   );
 }
@@ -152,6 +161,13 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: COLORS.screenBg,
+  },
+  loadErrorText: {
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    color: '#DC2626',
+    fontSize: moderateScale(14),
+    lineHeight: moderateScale(20),
   },
 
   // ── Scroll

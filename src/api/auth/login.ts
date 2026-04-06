@@ -7,7 +7,7 @@ export type LoginCredentials = {
 };
 
 export class LoginError extends Error {
-  constructor(
+  constructor( 
     message: string,
     public readonly statusCode?: number,
   ) {

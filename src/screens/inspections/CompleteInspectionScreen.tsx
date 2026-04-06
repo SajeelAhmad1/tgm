@@ -10,7 +10,9 @@ import {
   View,
 } from 'react-native';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { ConnectivityBanner } from '../../components/ConnectivityBanner';
 import { InspectionFlowHeader } from '../../components/inspections/InspectionFlowHeader';
+import { ScreenLoadingOverlay } from '../../components/ScreenLoadingOverlay';
 import { MainStackParamList } from '../../navigation/types';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -86,6 +88,8 @@ export function CompleteInspectionScreen({route}: Props) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [notes, setNotes] = useState('');
+  const [loading] = useState(false);
+  const [loadError] = useState<string | null>(null);
 
   return (
     <View style={styles.screen}>
@@ -94,6 +98,10 @@ export function CompleteInspectionScreen({route}: Props) {
         subtitle="Bay View Apartments"
         onBack={() => navigation?.goBack()}
       />
+      <ConnectivityBanner />
+      {loadError ? (
+        <Text style={styles.loadErrorText}>{loadError}</Text>
+      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -175,6 +183,7 @@ export function CompleteInspectionScreen({route}: Props) {
           </Pressable>
         </View>
       </ScrollView>
+      <ScreenLoadingOverlay visible={loading} />
     </View>
   );
 }
@@ -185,6 +194,13 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: COLORS.screenBg,
+  },
+  loadErrorText: {
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    color: '#DC2626',
+    fontSize: moderateScale(14),
+    lineHeight: moderateScale(20),
   },
 
   // ── Scroll

@@ -23,6 +23,7 @@ import {
   type InspectionOverviewDetail,
 } from '../../../inspections/inspectionOverview';
 import {buildPlaceholderListItem} from '../../../inspections/fallbackInspectionList';
+import {ConnectivityBanner} from '../../../components/ConnectivityBanner';
 import {useInspectionsListStore} from '../../../store/inspectionsListStore';
 import {
   InspectionTabBar,
@@ -241,6 +242,7 @@ function InspectionDetailTabbedLayout({inspectionId}: TabbedProps) {
         onBack={() => navigation.goBack()}
         topInset={insets.top}
       />
+      <ConnectivityBanner />
       <InspectionTabBar activeTab={activeTab} onChange={setActiveTab} />
       <View style={styles.content}>{renderContent()}</View>
     </View>

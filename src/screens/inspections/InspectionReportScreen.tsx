@@ -12,7 +12,9 @@ import {
   View,
 } from 'react-native';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { ConnectivityBanner } from '../../components/ConnectivityBanner';
 import { InspectionFlowHeader } from '../../components/inspections/InspectionFlowHeader';
+import { ScreenLoadingOverlay } from '../../components/ScreenLoadingOverlay';
 import { MainStackParamList } from '../../navigation/types';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -250,6 +252,8 @@ export function InspectionReportScreen() {
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [loading] = useState(false);
+  const [loadError] = useState<string | null>(null);
 
   const handlePhotoPress = (photos: string[], index: number) => {
     setLightboxPhotos(photos);
@@ -264,6 +268,10 @@ export function InspectionReportScreen() {
         layout="report"
         onBack={() => navigation.goBack()}
       />
+      <ConnectivityBanner />
+      {loadError ? (
+        <Text style={styles.loadErrorText}>{loadError}</Text>
+      ) : null}
 
       <ScrollView
         style={styles.scrollView}
@@ -391,6 +399,7 @@ export function InspectionReportScreen() {
           </View>
         </Pressable>
       </Modal>
+      <ScreenLoadingOverlay visible={loading} />
     </View>
   );
 }
@@ -399,6 +408,13 @@ export function InspectionReportScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.screenBg },
+  loadErrorText: {
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    color: '#DC2626',
+    fontSize: moderateScale(14),
+    lineHeight: moderateScale(20),
+  },
 
   // ── Scroll
   scrollView: { flex: 1 },

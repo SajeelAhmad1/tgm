@@ -1,6 +1,27 @@
 /* eslint-env jest */
 require('react-native-gesture-handler/jestSetup');
 
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: {
+    fetch: jest.fn(() =>
+      Promise.resolve({isConnected: true, isInternetReachable: true}),
+    ),
+    addEventListener: jest.fn(() => jest.fn()),
+  },
+}));
+
+jest.mock('react-native-signature-canvas', () => {
+  const React = require('react');
+  const {View} = require('react-native');
+  return {
+    __esModule: true,
+    default: React.forwardRef((props, ref) =>
+      React.createElement(View, {...props, ref, testID: 'signature-canvas-mock'}),
+    ),
+  };
+});
+
 jest.mock('@react-navigation/native-stack', () => ({
   createNativeStackNavigator: () => ({
     Navigator: ({children}) => children,

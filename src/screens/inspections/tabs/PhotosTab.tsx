@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import {ConnectivityBanner} from '../../../components/ConnectivityBanner';
 
 type Props = {
   inspectionId: string;
@@ -72,10 +73,12 @@ export function PhotosTab({inspectionId}: Props) {
   const gridItems: (Photo | 'add')[] = [...MOCK_PHOTOS, 'add'];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}>
+    <View style={styles.outer}>
+      <ConnectivityBanner />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
 
       <View style={styles.topRow}>
         <Text style={styles.countLabel}>
@@ -112,10 +115,15 @@ export function PhotosTab({inspectionId}: Props) {
       )}
 
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outer: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F1F5F9',

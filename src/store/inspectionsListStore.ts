@@ -1,6 +1,5 @@
 import {create} from 'zustand';
 import type {InspectionListItem} from '../components/inspections/InspectionListCard';
-import {FALLBACK_INSPECTION_LIST} from '../inspections/fallbackInspectionList';
 
 type InspectionsListState = {
   items: InspectionListItem[];
@@ -8,6 +7,6 @@ type InspectionsListState = {
 };
 
 export const useInspectionsListStore = create<InspectionsListState>(set => ({
-  items: [...FALLBACK_INSPECTION_LIST],
+  items: [],
   setItems: items => set({items}),
 }));

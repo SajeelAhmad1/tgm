@@ -7,11 +7,14 @@ export type MainStackParamList = {
   ClientSignature: {inspectionId: string};
   InspectionComplete: {inspectionId: string};
   InspectionReport: {inspectionId: string};
+  ReviewListQuestionDetails: {inspectionId: string};
+  Login: undefined;
 };
 
 export type AuthStackParamList = {
   Login: undefined;
   ForgotPassword: undefined;
+  AccountProfile: undefined;
 };
 
 export type RootStackParamList = {

@@ -6,12 +6,14 @@ import React from 'react';
 import {StyleSheet} from 'react-native';
 import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {ConnectivityBootstrap} from './src/components/ConnectivityBootstrap';
 import {RootNavigator} from './src/navigation/RootNavigator';
 
 function App(): React.JSX.Element {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
+        <ConnectivityBootstrap />
         <RootNavigator />
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -7,6 +7,7 @@ import { CompleteInspectionScreen } from '../screens/inspections/CompleteInspect
 import { ClientSignatureScreen } from '../screens/inspections/ClientSignature';
 import { InspectionCompleteScreen } from '../screens/inspections/InspectionCompleteScreen';
 import { InspectionReportScreen } from '../screens/inspections/InspectionReportScreen';
+import { ReviewListQuestionDetailsScreen } from '../screens/inspections/ReviewListQuestionDetails';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -24,7 +25,7 @@ export function MainNavigator() {
       <Stack.Screen
         name="InspectionList"
         component={InspectionListScreen}
-        options={{title: 'Inspections'}}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="InspectionDetail"
@@ -49,6 +50,11 @@ export function MainNavigator() {
       <Stack.Screen
         name="InspectionReport"
         component={InspectionReportScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ReviewListQuestionDetails"
+        component={ReviewListQuestionDetailsScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
