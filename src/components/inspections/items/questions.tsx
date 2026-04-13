@@ -67,6 +67,7 @@ type Props = {
 export function ItemQuestionsSheet({visible, itemId, itemName, onClose, onSaved}: Props) {
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, QuestionAnswerState>>({});
+  const [answerIdByQuestionId, setAnswerIdByQuestionId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +88,7 @@ export function ItemQuestionsSheet({visible, itemId, itemName, onClose, onSaved}
       setError(null);
       setQuestions([]);
       setAnswers({});
+      setAnswerIdByQuestionId({});
 
       const questionsResult = await requestItemQuestionsFromNetwork(itemId);
       if (cancelled) {
@@ -117,6 +119,7 @@ export function ItemQuestionsSheet({visible, itemId, itemName, onClose, onSaved}
       );
 
       const loaded: Record<string, QuestionAnswerState> = {};
+      const loadedIds: Record<string, string> = {};
       const fetched = await Promise.all(
         rows.map(async row => {
           const result = await requestAnswerByQuestionIdFromNetwork(row.id);
@@ -130,10 +133,15 @@ export function ItemQuestionsSheet({visible, itemId, itemName, onClose, onSaved}
 
       fetched.forEach(({questionId, result}) => {
         const answer = result.ok ? result.answer : null;
-        loaded[questionId] = mapAnswerDtoToState(answer);
+        const mapped = mapAnswerDtoToState(answer);
+        loaded[questionId] = mapped;
+        if (typeof mapped.id === 'string' && mapped.id.trim().length > 0) {
+          loadedIds[questionId] = mapped.id;
+        }
       });
 
       setAnswers(loaded);
+      setAnswerIdByQuestionId(loadedIds);
       setLoading(false);
     };
 
@@ -314,13 +322,21 @@ export function ItemQuestionsSheet({visible, itemId, itemName, onClose, onSaved}
       if (!row?.value) {
         continue;
       }
+      if (row.value === 'NO' && !row.severity) {
+        setError(`Select severity for question ${q.sortOrder || ''}.`.trim());
+        setSaving(false);
+        return;
+      }
 
       const payload: SaveAnswerPayload = {
-        id: row.id,
+        id:
+          (typeof row.id === 'string' && row.id.trim().length > 0
+            ? row.id
+            : answerIdByQuestionId[q.id]) ?? '',
         questionId: q.id,
         value: row.value,
         severity: row.value === 'NO' ? row.severity ?? null : null,
-        comment: row.value === 'NO' ? row.comment : '',
+        comment: row.value === 'NO' ? row.comment : undefined,
       };
 
       const result = await saveAnswerFromNetwork(payload);
@@ -337,6 +353,7 @@ export function ItemQuestionsSheet({visible, itemId, itemName, onClose, onSaved}
           id: result.id,
         },
       }));
+      setAnswerIdByQuestionId(prev => ({...prev, [q.id]: result.id}));
     }
 
     setSaving(false);
@@ -582,7 +599,12 @@ function mapAnswerDtoToState(answer: QuestionAnswerDto | null): QuestionAnswerSt
       : undefined;
 
   return {
-    id: typeof answer.id === 'string' ? answer.id : undefined,
+    id:
+      typeof answer.id === 'string'
+        ? answer.id
+        : typeof answer.answerId === 'string'
+          ? answer.answerId
+          : undefined,
     value,
     severity,
     comment: typeof answer.comment === 'string' ? answer.comment : '',
@@ -624,7 +646,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     maxHeight: '86%',
-    paddingTop: 12,
+    paddingTop: 20,
   },
   header: {
     flexDirection: 'row',
@@ -636,12 +658,12 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#F1F5F9',
   },
-  closeBtnText: {fontFamily: 'Inter', fontWeight: '700', color: '#64748B'},
+  closeBtnText: { fontWeight: '200', fontSize: 14, color: '#64748B'},
   subtitle: {
     paddingHorizontal: 16,
     marginTop: 6,

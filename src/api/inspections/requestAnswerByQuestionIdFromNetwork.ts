@@ -15,6 +15,7 @@ function parseJson(text: string): unknown {
 
 export type QuestionAnswerDto = {
   id?: string;
+  answerId?: string;
   questionId?: string;
   value?: 'YES' | 'NO' | 'NOT_ASSESSED' | string;
   severity?: string | null;

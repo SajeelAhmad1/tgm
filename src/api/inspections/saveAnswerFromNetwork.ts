@@ -18,7 +18,7 @@ export type SaveAnswerPayload = {
   questionId: string;
   value: 'YES' | 'NO' | 'NOT_ASSESSED';
   severity?: 'MINOR' | 'MODERATE' | 'CRITICAL' | null;
-  comment: string;
+  comment?: string;
 };
 
 export type SaveAnswerResult =
@@ -33,6 +33,21 @@ export async function saveAnswerFromNetwork(payload: SaveAnswerPayload): Promise
 
   const method = payload.id ? 'PUT' : 'POST';
   const endpoint = payload.id ? `${getApiBaseUrl()}/api/answers/${payload.id}` : `${getApiBaseUrl()}/api/answers`;
+  const requestBody: Record<string, unknown> = {
+    id: payload.id ?? '',
+    questionId: payload.questionId,
+    value: payload.value,
+  };
+  if (payload.value === 'NO') {
+    if (payload.severity) {
+      requestBody.severity = payload.severity;
+    }
+    const comment = typeof payload.comment === 'string' ? payload.comment.trim() : '';
+    if (comment) {
+      requestBody.comment = comment;
+    }
+  }
+  const payloadText = JSON.stringify(requestBody);
 
   try {
     const res = await fetch(endpoint, {
@@ -42,13 +57,25 @@ export async function saveAnswerFromNetwork(payload: SaveAnswerPayload): Promise
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(requestBody),
     });
 
     const bodyText = await res.text();
     const parsed = parseJson(bodyText);
     if (!res.ok) {
-      return {ok: false, error: `Could not save answer (${res.status}).`};
+      const data = isRecord(parsed) && isRecord(parsed.data) ? parsed.data : null;
+      const explicit =
+        (isRecord(parsed) && typeof parsed.message === 'string' && parsed.message.trim()) ||
+        (data && typeof data.message === 'string' && data.message.trim()) ||
+        (data && typeof data.error === 'string' && data.error.trim()) ||
+        (typeof bodyText === 'string' && bodyText.trim()) ||
+        '';
+      return {
+        ok: false,
+        error: explicit
+          ? `Could not save answer (${res.status}): ${explicit}\nPayload: ${payloadText}`
+          : `Could not save answer (${res.status}).\nPayload: ${payloadText}`,
+      };
     }
     if (!isRecord(parsed) || parsed.success !== true) {
       return {ok: false, error: 'Invalid response from server.'};
@@ -62,6 +89,6 @@ export async function saveAnswerFromNetwork(payload: SaveAnswerPayload): Promise
     return {ok: true, id};
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error';
-    return {ok: false, error: msg};
+    return {ok: false, error: `${msg}\nPayload: ${payloadText}`};
   }
 }
