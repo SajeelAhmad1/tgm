@@ -1,7 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import type {InspectionListItem} from '../components/inspections/InspectionListCard';
 import {requestInspectionsFromNetwork} from '../api/inspections/requestInspectionsFromNetwork';
-import {FALLBACK_INSPECTION_LIST} from '../inspections/fallbackInspectionList';
 import {
   loadCachedInspections,
   saveCachedInspections,
@@ -27,7 +26,7 @@ function canUseNetwork(state: {
 
 /**
  * Loads inspections: uses network when available (persists on success),
- * otherwise local cache, otherwise sample fallback list.
+ * otherwise local cache.
  */
 export async function loadInspectionsData(): Promise<LoadInspectionsResult> {
   const cached = await loadCachedInspections();
@@ -41,8 +40,8 @@ export async function loadInspectionsData(): Promise<LoadInspectionsResult> {
       };
     }
     return {
-      items: [...FALLBACK_INSPECTION_LIST],
-      error: 'Offline — no saved data. Showing sample inspections.',
+      items: [],
+      error: 'Offline — no saved inspections available.',
     };
   }
 
@@ -57,7 +56,7 @@ export async function loadInspectionsData(): Promise<LoadInspectionsResult> {
   }
 
   return {
-    items: [...FALLBACK_INSPECTION_LIST],
+    items: [],
     error: remote.error,
   };
 }

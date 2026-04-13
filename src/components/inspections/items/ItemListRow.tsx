@@ -6,7 +6,7 @@ import {ITEM_STATUS_CONFIG, getItemSubtitle} from './itemsTabTokens';
 type Props = {
   item: InspectionItemRow;
   onPress: () => void;
-};
+}; 
 
 export function ItemListRow({item, onPress}: Props) {
   const cfg = ITEM_STATUS_CONFIG[item.status];

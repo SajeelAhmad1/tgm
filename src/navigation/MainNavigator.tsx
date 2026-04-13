@@ -8,6 +8,8 @@ import { ClientSignatureScreen } from '../screens/inspections/ClientSignature';
 import { InspectionCompleteScreen } from '../screens/inspections/InspectionCompleteScreen';
 import { InspectionReportScreen } from '../screens/inspections/InspectionReportScreen';
 import { ReviewListQuestionDetailsScreen } from '../screens/inspections/ReviewListQuestionDetails';
+import {AccountProfileScreen} from '../screens/auth/AccountProfileScreen';
+import ReviewInspectionScreen from '../screens/ReviewInspectionScreen';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
@@ -55,6 +57,16 @@ export function MainNavigator() {
       <Stack.Screen
         name="ReviewListQuestionDetails"
         component={ReviewListQuestionDetailsScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="ReviewInspection"
+        component={ReviewInspectionScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="AccountProfile"
+        component={AccountProfileScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

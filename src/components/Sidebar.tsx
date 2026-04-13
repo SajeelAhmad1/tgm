@@ -1,23 +1,53 @@
-http://3.147.72.174:3000
-
-`I want that when user clicks on hamburger, this sidebar opens;
-import React, { useRef, useEffect } from 'react';
+import React, {useEffect, useMemo, useRef} from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
   Animated,
-  Dimensions,
   Modal,
   Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import LinearGradient from 'react-native-linear-gradient';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+type SidebarRoute = 'Home' | 'AccountProfile' | 'Logout';
 
-const Sidebar = ({ visible, onClose, onNavigate }) => {
-  const slideAnim = useRef(new Animated.Value(-280)).current;
+type Props = {
+  visible: boolean;
+  userName: string;
+  userRole?: string;
+  onClose: () => void;
+  onNavigate?: (screen: SidebarRoute) => void;
+};
+
+type SidebarMenuItemProps = {
+  label: string;
+  danger?: boolean;
+  onPress: () => void;
+};
+
+function SidebarMenuItem({label, danger = false, onPress}: SidebarMenuItemProps) {
+  return (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+      <Text style={[styles.menuText, danger ? styles.logoutText : undefined]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+export function Sidebar({
+  visible,
+  userName,
+  userRole = 'Field Inspector',
+  onClose,
+  onNavigate,
+}: Props) {
+  const {width: screenWidth, height: screenHeight} = useWindowDimensions();
+  const sidebarWidth = useMemo(
+    () => Math.min(Math.max(Math.round(screenWidth * 0.82), 260), 360),
+    [screenWidth],
+  );
+  const slideAnim = useRef(new Animated.Value(sidebarWidth)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,106 +64,100 @@ const Sidebar = ({ visible, onClose, onNavigate }) => {
           useNativeDriver: true,
         }),
       ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: -280,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      return;
     }
-  }, [visible]);
 
-  const handleNavigate = (screen) => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: sidebarWidth,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, sidebarWidth, slideAnim, visible]);
+
+  useEffect(() => {
+    if (!visible) {
+      slideAnim.setValue(sidebarWidth);
+    }
+  }, [sidebarWidth, slideAnim, visible]);
+
+  const displayName = useMemo(() => {
+    const trimmed = userName.trim();
+    return trimmed.length > 0 ? trimmed : 'User';
+  }, [userName]);
+
+  const handleNavigate = (screen: SidebarRoute) => {
     onClose();
     onNavigate?.(screen);
   };
 
   return (
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
-      {/* Backdrop */}
-      <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+      <Animated.View style={[styles.backdrop, {opacity: fadeAnim}]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </Animated.View>
 
-      {/* Sidebar Panel */}
-      <Animated.View style={[styles.sidebar, { transform: [{ translateX: slideAnim }] }]}>
-
-        {/* Gradient Header */}
+      <Animated.View
+        style={[
+          styles.sidebar,
+          {
+            width: sidebarWidth,
+            height: screenHeight,
+            transform: [{translateX: slideAnim}],
+          },
+        ]}>
         <LinearGradient
           colors={['#1E88E5', '#1467C3', '#0D47A1']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          {/* Title Row */}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.header}>
           <View style={styles.titleRow}>
             <Text style={styles.menuTitle}>Menu</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.7}>
-              <Text style={styles.closeIcon}>✕</Text>
+              <Text style={styles.closeIcon}>x</Text>
             </TouchableOpacity>
           </View>
 
-          {/* User Info */}
           <View style={styles.userRow}>
             <View style={styles.avatar}>
-              {/* Person icon using text/unicode */}
-              <Text style={styles.avatarIcon}>👤</Text>
+              <Text style={styles.avatarIcon}>U</Text>
             </View>
             <View>
-              <Text style={styles.userName}>James Mitchell</Text>
-              <Text style={styles.userRole}>Field Inspector</Text>
+              <Text style={styles.userName}>{displayName}</Text>
+              <Text style={styles.userRole}>{userRole}</Text>
             </View>
           </View>
         </LinearGradient>
 
-        {/* Menu Items */}
         <View style={styles.menuItems}>
-
-          <TouchableOpacity
-            style={styles.menuItem}
-            onPress={() => handleNavigate('Home')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.menuIcon}>🏠</Text>
-            <Text style={styles.menuText}>Home</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.menuItem}
+          <SidebarMenuItem label="Home" onPress={() => handleNavigate('Home')} />
+          <SidebarMenuItem
+            label="Account Profile"
             onPress={() => handleNavigate('AccountProfile')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.menuIcon}>👤</Text>
-            <Text style={styles.menuText}>Account Profile</Text>
-          </TouchableOpacity>
+          />
 
           <View style={styles.divider} />
 
-          <TouchableOpacity
-            style={styles.menuItem}
+          <SidebarMenuItem
+            label="Logout"
+            danger
             onPress={() => handleNavigate('Logout')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.menuIcon}>🚪</Text>
-            <Text style={[styles.menuText, styles.logoutText]}>Logout</Text>
-          </TouchableOpacity>
+          />
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>TGM Field App v1.0.0</Text>
+          <Text style={styles.footerText}>TGM Field App</Text>
         </View>
       </Animated.View>
     </Modal>
   );
-};
+}
 
 const styles = StyleSheet.create({
   backdrop: {
@@ -142,15 +166,12 @@ const styles = StyleSheet.create({
   },
   sidebar: {
     position: 'absolute',
-    left: 90,
+    right: 0,
     top: 0,
-    width: 280,
-    height: 740,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 25 },
+    shadowOffset: {width: 0, height: 25},
     shadowOpacity: 0.25,
     shadowRadius: 25,
     elevation: 20,
@@ -200,7 +221,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarIcon: {
-    fontSize: 22,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   userName: {
     fontFamily: 'Inter',
@@ -226,11 +249,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     gap: 12,
-  },
-  menuIcon: {
-    fontSize: 18,
-    width: 24,
-    textAlign: 'center',
   },
   menuText: {
     fontFamily: 'Inter',
@@ -260,27 +278,3 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
 });
-
-export default Sidebar;
-
-usage example;
-import React, { useState } from 'react';
-import { View, Button } from 'react-native';
-import Sidebar from './Sidebar';
-
-export default function App() {
-  const [sidebarVisible, setSidebarVisible] = useState(false);
-
-  return (
-    <View style={{ flex: 1 }}>
-      <Button title="Open Menu" onPress={() => setSidebarVisible(true)} />
-      <Sidebar
-        visible={sidebarVisible}
-        onClose={() => setSidebarVisible(false)}
-        onNavigate={(screen) => console.log('Navigate to:', screen)}
-      />
-    </View>
-  );
-}
-
-also I want that we are using hard coded name. i want that we use it from session. when user logs in, we have name inside user. I also want that the day and date and timings are correct, not hard coded. use correct time format so that it don't conflict with time zone and show incorrect time. also implement logout functionality and end session. and on logout, move to login screen.`

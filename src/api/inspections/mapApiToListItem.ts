@@ -10,6 +10,33 @@ const DUMMY = {
   address: '—',
 } as const;
 
+function formatTimeLabel(value: string): string | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
+function formatScheduledRange(
+  scheduledStart: string | undefined,
+  scheduledEnd: string | undefined,
+): string {
+  if (!scheduledStart || !scheduledEnd) {
+    return DUMMY.timeRange;
+  }
+  const start = formatTimeLabel(scheduledStart);
+  const end = formatTimeLabel(scheduledEnd);
+  if (!start || !end) {
+    return DUMMY.timeRange;
+  }
+  return `${start} – ${end}`;
+}
+
 function mapApiStatus(raw: string | undefined): InspectionCardStatus {
   const s = (raw ?? '').toUpperCase();
   if (s === 'IN_PROGRESS') {
@@ -59,13 +86,18 @@ export function mapApiInspectionToListItem(dto: ApiInspectionDto): InspectionLis
       ? dto.address.trim()
       : DUMMY.address;
 
+  const developer =
+    typeof dto.clientName === 'string' && dto.clientName.trim().length > 0
+      ? dto.clientName.trim()
+      : DUMMY.developer;
+
   const progress = safeProgress(dto.answeredQuestions, dto.totalQuestions);
 
   return {
     id,
-    timeRange: DUMMY.timeRange,
+    timeRange: formatScheduledRange(dto.scheduledStart, dto.scheduledEnd),
     title,
-    developer: DUMMY.developer,
+    developer,
     address,
     assignee: DUMMY.assignee,
     status: mapApiStatus(dto.status),

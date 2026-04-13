@@ -1,5 +1,5 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   RefreshControl,
   ScrollView,
@@ -13,20 +13,24 @@ import {ConnectivityBanner} from '../../components/ConnectivityBanner';
 import {InspectionListCard} from '../../components/inspections/InspectionListCard';
 import {InspectionListHeader} from '../../components/inspections/InspectionListHeader';
 import {InspectionSyncBanner} from '../../components/inspections/InspectionSyncBanner';
+import {Sidebar} from '../../components/Sidebar';
 import {INSPECTION_LIST_COLORS} from '../../components/inspections/inspectionListTokens';
 import {ScreenLoadingOverlay} from '../../components/ScreenLoadingOverlay';
 import type {MainStackParamList} from '../../navigation/types';
 import {loadInspectionsData} from '../../services/loadInspectionsData';
+import {useAuthStore} from '../../store/authStore';
 import {useInspectionsListStore} from '../../store/inspectionsListStore';
-import { USER_NAME } from './username';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'InspectionList'>;
 
 type LoadMode = 'initial' | 'refresh';
 
 export function InspectionListScreen({navigation}: Props) {
-  const [currentDate] = React.useState({day: 'Monday', date: '6 April 2026'});
-  const [syncTime] = React.useState('3:00 AM');
+  const user = useAuthStore(s => s.user);
+  const clearSession = useAuthStore(s => s.clearSession);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   const items = useInspectionsListStore(s => s.items);
   const setItems = useInspectionsListStore(s => s.setItems);
@@ -45,6 +49,7 @@ export function InspectionListScreen({navigation}: Props) {
       const result = await loadInspectionsData();
       setItems(result.items);
       setLoadError(result.error);
+      setLastSyncedAt(new Date());
       setLoading(false);
       setRefreshing(false);
     },
@@ -56,14 +61,64 @@ export function InspectionListScreen({navigation}: Props) {
   }, [runLoad]);
 
   const showBlockingLoad = loading && items.length === 0;
+  const userName = user?.name?.trim() || 'User';
+  const userRole = user?.role?.trim() || 'Field Inspector';
+
+  const currentDate = useMemo(
+    () => ({
+      day: new Intl.DateTimeFormat(undefined, {weekday: 'long'}).format(selectedDate),
+      date: new Intl.DateTimeFormat(undefined, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(selectedDate),
+    }),
+    [selectedDate],
+  );
+
+  const syncTime = useMemo(() => {
+    if (!lastSyncedAt) {
+      return 'Not synced yet';
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).format(lastSyncedAt);
+  }, [lastSyncedAt]);
+
+  const handleNavigateFromSidebar = useCallback(
+    (screen: 'Home' | 'AccountProfile' | 'Logout') => {
+      if (screen === 'Home') {
+        return;
+      }
+
+      if (screen === 'AccountProfile') {
+        navigation.navigate('AccountProfile');
+        return;
+      }
+
+      clearSession();
+    },
+    [clearSession, navigation],
+  );
 
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="light-content" backgroundColor={INSPECTION_LIST_COLORS.headerBg} />
 
       <InspectionListHeader
-        userName={USER_NAME}
+        userName={userName}
         currentDate={currentDate}
+        onPressMenu={() => setSidebarVisible(true)}
+        onPressPrevDay={() =>
+          setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() - 1))
+        }
+        onPressNextDay={() =>
+          setSelectedDate(prev => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() + 1))
+        }
       />
 
       <ConnectivityBanner />
@@ -100,6 +155,14 @@ export function InspectionListScreen({navigation}: Props) {
           ))}
         </ScrollView>
       </View>
+
+      <Sidebar
+        visible={sidebarVisible}
+        userName={userName}
+        userRole={userRole}
+        onClose={() => setSidebarVisible(false)}
+        onNavigate={handleNavigateFromSidebar}
+      />
     </View>
   );
 }

@@ -7,7 +7,7 @@ export type InspectionCardStatus = 'in_progress' | 'scheduled' | 'completed';
 
 type Props = {
   status: InspectionCardStatus;
-};
+}; 
 
 export function InspectionStatusBadge({status}: Props) {
   const isInProgress = status === 'in_progress';

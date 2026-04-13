@@ -4,17 +4,17 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import type {NativeStackNavigationProp} from '@react-navigation/native-stack';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Linking,
-  Pressable,
+  Pressable, 
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from 'react-native'; 
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import type {MainStackParamList} from '../../../navigation/types';
 import type {InspectionListItem} from '../../../components/inspections/InspectionListCard';
@@ -32,6 +32,7 @@ import {
 import {ItemsTab} from './ItemsTab';
 import {PhotosTab} from './PhotosTab';
 import {SummaryTab} from './SummaryTab';
+import {requestInspectionDetailFromNetwork} from '../../../api/inspections/requestInspectionDetailFromNetwork';
 
 const BLUE = '#2091F9';
 const MUTED = '#94A3B8';
@@ -153,7 +154,7 @@ function InspectionOverviewScroll({data}: {data: InspectionBundle}) {
           <Text style={styles.rowValueStrong}>{detail.dateLabel}</Text>
         </DetailRow>
         <DetailRow label="Time Window" isLast>
-          <Text style={styles.rowValueStrong}>{list.timeRange}</Text>
+          <Text style={styles.rowValueStrong}>{detail.timeWindowLabel}</Text>
         </DetailRow>
       </View>
 
@@ -217,9 +218,38 @@ function InspectionDetailTabbedLayout({inspectionId}: TabbedProps) {
   const [activeTab, setActiveTab] = useState<InspectionDetailTabId>('Overview');
 
   const cached = useInspectionsListStore(s => s.items.find(x => x.id === inspectionId));
-  const listItem: InspectionListItem =
-    cached ?? buildPlaceholderListItem(inspectionId);
-  const bundle = buildInspectionOverviewBundle(listItem);
+  const [detailPatch, setDetailPatch] = useState<{
+    list: Partial<InspectionListItem>;
+    dateLabel?: string;
+    issuesItemCount?: number;
+  } | null>(null);
+  const baseListItem: InspectionListItem = cached ?? buildPlaceholderListItem(inspectionId);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDetailPatch(null);
+
+    const run = async () => {
+      const result = await requestInspectionDetailFromNetwork(inspectionId);
+      if (!cancelled && result.ok) {
+        setDetailPatch(result.patch);
+      }
+    };
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [inspectionId]);
+
+  const mergedListItem: InspectionListItem = {
+    ...baseListItem,
+    ...(detailPatch?.list ?? {}),
+  };
+  const bundle = buildInspectionOverviewBundle(mergedListItem, {
+    dateLabel: detailPatch?.dateLabel,
+    issuesItemCount: detailPatch?.issuesItemCount,
+  });
 
   const renderContent = () => {
     switch (activeTab) {

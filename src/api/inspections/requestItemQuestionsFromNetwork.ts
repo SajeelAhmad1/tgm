@@ -1,13 +1,11 @@
-import type {InspectionListItem} from '../../components/inspections/InspectionListCard';
 import {getApiBaseUrl} from '../../config/env';
 import {useAuthStore} from '../../store/authStore';
-import {mapApiInspectionToListItem} from './mapApiToListItem';
-import type {ApiInspectionDto} from './types';
+import type {ApiInspectionQuestionDto} from './types';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
-} 
-
+}
+ 
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text) as unknown;
@@ -16,34 +14,37 @@ function parseJson(text: string): unknown {
   }
 }
 
+function isApiQuestion(v: unknown): v is ApiInspectionQuestionDto {
+  return isRecord(v) && typeof v.id === 'string';
+}
+
 function isValidSuccessResponse(
   v: unknown,
-): v is {success: true; data: {inspections: ApiInspectionDto[]}} {
+): v is {success: true; data: {questions: ApiInspectionQuestionDto[]}} {
   if (!isRecord(v) || v.success !== true) {
     return false;
   }
   const data = v.data;
-  if (!isRecord(data)) {
+  if (!isRecord(data) || !Array.isArray(data.questions)) {
     return false;
   }
-  return Array.isArray(data.inspections);
+  return data.questions.every(isApiQuestion);
 }
 
-export type NetworkInspectionsResult =
-  | {ok: true; items: InspectionListItem[]}
+export type ItemQuestionsNetworkResult =
+  | {ok: true; questions: ApiInspectionQuestionDto[]}
   | {ok: false; error: string};
 
-/**
- * GET /api/inspections — no local fallback; callers handle errors and cache.
- */
-export async function requestInspectionsFromNetwork(): Promise<NetworkInspectionsResult> {
+export async function requestItemQuestionsFromNetwork(
+  itemId: string,
+): Promise<ItemQuestionsNetworkResult> {
   const token = useAuthStore.getState().accessToken;
   if (!token) {
     return {ok: false, error: 'Not signed in.'};
   }
 
   try {
-    const res = await fetch(`${getApiBaseUrl()}/api/inspections`, {
+    const res = await fetch(`${getApiBaseUrl()}/api/items/${itemId}/questions`, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -55,19 +56,13 @@ export async function requestInspectionsFromNetwork(): Promise<NetworkInspection
     const parsed = parseJson(bodyText);
 
     if (!res.ok) {
-      return {
-        ok: false,
-        error: `Could not load inspections (${res.status}).`,
-      };
+      return {ok: false, error: `Could not load item questions (${res.status}).`};
     }
-
     if (!isValidSuccessResponse(parsed)) {
       return {ok: false, error: 'Invalid response from server.'};
     }
 
-    const rows = parsed.data.inspections;
-    const items = rows.map(mapApiInspectionToListItem);
-    return {ok: true, items};
+    return {ok: true, questions: parsed.data.questions};
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error';
     return {ok: false, error: msg};

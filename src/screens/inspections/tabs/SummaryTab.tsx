@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {
   Pressable,
   ScrollView,
-  StyleSheet,
+  StyleSheet, 
   Text,
   View,
 } from 'react-native';
@@ -58,7 +58,10 @@ export function SummaryTab({inspectionId}: Props) {
           <Text style={styles.photoTitle}>📸 AI Photo Analysis</Text>
           <Pressable
             style={[styles.btn, photoDone ? styles.btnGreen : styles.btnPurple]}
-            onPress={() => setPhotoDone(true)}>
+            onPress={() => {
+              setPhotoDone(true);
+              navigation.push('ReviewInspection');
+            }}>
             <Text style={styles.btnText}>
               {photoDone ? '✓ Analysis Complete' : 'Analyse Photos'}
             </Text>

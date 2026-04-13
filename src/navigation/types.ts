@@ -8,7 +8,8 @@ export type MainStackParamList = {
   InspectionComplete: {inspectionId: string};
   InspectionReport: {inspectionId: string};
   ReviewListQuestionDetails: {inspectionId: string};
-  Login: undefined;
+  ReviewInspection: undefined;
+  AccountProfile: undefined;
 };
 
 export type AuthStackParamList = {

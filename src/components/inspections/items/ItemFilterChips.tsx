@@ -7,7 +7,7 @@ type Props = {
   activeFilter: FilterType;
   onChange: (f: FilterType) => void;
   filters?: FilterType[];
-};
+}; 
 
 export function ItemFilterChips({
   activeFilter,
@@ -18,6 +18,7 @@ export function ItemFilterChips({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.filtersScroll}
       contentContainerStyle={styles.filtersRow}>
       {filters.map(f => {
         const isActive = activeFilter === f;
@@ -45,15 +46,21 @@ export function ItemFilterChips({
 }
 
 const styles = StyleSheet.create({
+  filtersScroll: {
+    maxHeight: 30,
+    marginBottom: 12,
+  },
   filtersRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
-    paddingBottom: 10,
   },
   filterChip: {
-    paddingVertical: 5,
+    height: 30,
     paddingHorizontal: 12,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterText: {
     fontFamily: 'Inter',

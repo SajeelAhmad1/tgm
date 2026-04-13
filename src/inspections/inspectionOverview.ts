@@ -6,20 +6,13 @@ export type InspectionOverviewDetail = {
   category: string;
   statusLabel: string;
   dateLabel: string;
+  timeWindowLabel: string;
   issuesItemCount: number;
 };
 
 export type InspectionBundle = {
   list: InspectionListItem;
   detail: InspectionOverviewDetail;
-};
-
-const DUMMY_DETAIL: InspectionOverviewDetail = {
-  inspectionType: 'Detailed Product Walkthrough',
-  category: 'Client Sign-Off',
-  statusLabel: 'Scheduled',
-  dateLabel: '16 March 2026',
-  issuesItemCount: 0,
 };
 
 function statusToOverviewLabel(status: InspectionCardStatus): string {
@@ -34,17 +27,27 @@ function statusToOverviewLabel(status: InspectionCardStatus): string {
 }
 
 /**
- * Builds overview tab data from the same fields used on the list card.
- * Extra overview-only copy uses safe defaults when the API does not provide it.
+ * Builds overview tab data from API-backed fields already present in list/detail payloads.
  */
 export function buildInspectionOverviewBundle(
   list: InspectionListItem,
+  overrides?: Partial<InspectionOverviewDetail>,
 ): InspectionBundle {
+  const inspectionType = overrides?.inspectionType?.trim() || 'N/A';
+  const category = overrides?.category?.trim() || 'N/A';
+  const dateLabel = overrides?.dateLabel?.trim() || '—';
+  const timeWindowLabel = overrides?.timeWindowLabel?.trim() || 'N/A';
+  const issuesItemCount = Math.max(0, overrides?.issuesItemCount ?? 0);
+
   return {
     list,
     detail: {
-      ...DUMMY_DETAIL,
+      inspectionType: overrides?.inspectionType ?? inspectionType,
+      category: overrides?.category ?? category,
       statusLabel: statusToOverviewLabel(list.status),
+      dateLabel,
+      timeWindowLabel,
+      issuesItemCount,
     },
   };
 }

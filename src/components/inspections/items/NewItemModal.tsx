@@ -9,7 +9,7 @@ import {
   Switch,
   Text,
   TouchableWithoutFeedback,
-  View,
+  View, 
 } from 'react-native';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 import { FormFieldLabel, FormTextInput } from '../../forms/FormFieldPrimitives';
