@@ -12,6 +12,7 @@ import {ItemFilterChips} from '../../../components/inspections/items/ItemFilterC
 import {ItemListRow} from '../../../components/inspections/items/ItemListRow';
 import type {FilterType, InspectionItemRow} from '../../../components/inspections/items/itemsTabTokens';
 import {NewItemModal} from '../../../components/inspections/items/NewItemModal';
+import {ItemQuestionsSheet} from '../../../components/inspections/items/questions';
 import {requestInspectionItemsFromNetwork} from '../../../api/inspections/requestInspectionItemsFromNetwork';
 
 type Props = {
@@ -25,6 +26,7 @@ export function ItemsTab({inspectionId, onItemPress}: Props) {
   const [activeFilter, setFilter] = useState<FilterType>('All');
   const [items, setItems] = useState<InspectionItemRow[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,9 +93,18 @@ export function ItemsTab({inspectionId, onItemPress}: Props) {
         renderItem={({item}) => (
           <ItemListRow
             item={item}
-            onPress={() => onItemPress?.(item.id)}
+            onPress={() => {
+              onItemPress?.(item.id);
+              setSelectedItemId(item.id);
+            }}
           />
         )}
+      />
+      <ItemQuestionsSheet
+        visible={selectedItemId !== null}
+        itemId={selectedItemId}
+        itemName={items.find(x => x.id === selectedItemId)?.name}
+        onClose={() => setSelectedItemId(null)}
       />
       <NewItemModal
         visible={showNewItem}
